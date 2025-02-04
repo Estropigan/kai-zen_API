@@ -44,7 +44,7 @@ export const getAllUsers  = async (req, res) => {
 
 export const updateUser = async (req, res) => {
   const { uid } = req.params;
-  const { firstName, lastName, email, password, address } = req.body;
+  const { firstName, lastName, email, address } = req.body;
 
   try {
      await updateDocument('users', uid, { firstName, lastName, email, address });

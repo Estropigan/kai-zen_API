@@ -41,10 +41,19 @@ export const validateLogin = (req, res, next) => {
 export const validateBooking = (req, res, next) => {
   const schema = Joi.object({
     customerId: Joi.string().required(),
-    cleanerId: Joi.array().required(),
-    serviceType: Joi.string().valid('regular', 'deep', 'carpet', 'windows').required(),
-    time: Joi.date().iso().required(), // ISO format date
-    status: Joi.string().valid('pending', 'in-progress', 'completed').required(),
+    cleanerIds: Joi.array().items(Joi.string()).min(1).required(), 
+    serviceType: Joi.string().valid('carpet', 'end-of-lease', 'residential', 'ndis', 'office', 'spring', 'upholstery').required(),
+    serviceCategory: Joi.string().valid('regular', 'deep').required(),
+    addOns: Joi.array().items(Joi.string()).optional(),
+    schedule: Joi.date().iso().required(), // ISO format date
+    recurringSchedule: Joi.object({
+      frequency: Joi.string().valid('daily', 'weekly', 'monthly').required(),
+      occurrences: Joi.number().min(1).max(12).required() // Limit to 12 occurrences max
+    }).optional(),
+    status: Joi.string().valid('pending', 'in-progress', 'completed', 'cancelled', 'paid').required(),
+    mop: Joi.string().valid('card', 'applePay', 'googlePay', 'stripe', 'paypal').required(),
+    address: Joi.string().optional(),
+    specialInstructions: Joi.string().optional()
   });
 
   const { error } = schema.validate(req.body);
@@ -59,9 +68,11 @@ export const validateBooking = (req, res, next) => {
 // Validate user update (name, email, role)
 export const validateUserUpdate = (req, res, next) => {
   const schema = Joi.object({
-    name: Joi.string().optional(),
-    email: Joi.string().email().optional(),
-    role: Joi.string().valid('customer', 'admin', 'cleaner').optional(),
+    firstName: Joi.string().required(),
+    lastName: Joi.string().required(),
+    address: Joi.string().required(),
+    email: Joi.string().email().required(),
+    phoneNumber: Joi.number().required(),
   });
 
   const { error } = schema.validate(req.body);

@@ -7,7 +7,7 @@ import { verifyToken, isAdmin } from '../middlewares/authenticationMiddleware.js
 const router = express.Router();
 
 // Create a new booking
-router.post('/create', validateBooking, createBooking);
+router.post('/create', verifyToken, validateBooking, createBooking);
 
 // Get booking by id
 router.get('/:bookingId', getBookingById)
@@ -16,10 +16,10 @@ router.get('/:bookingId', getBookingById)
 router.get('/', getBookings);
 
 // Update booking status
-router.put('/update-booking/:id', validateBooking, updateBooking);
+router.put('/update-booking/:id', verifyToken, isAdmin, validateBooking, updateBooking);
 
 // Delete booking
 
-router.delete('/delete-booking/:id', deleteBooking);
+router.delete('/delete-booking/:id', verifyToken, isAdmin, deleteBooking);
 
 export default router;

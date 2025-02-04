@@ -3,9 +3,33 @@ import { sendNotification } from '../services/notificationService.js';
 import { errorHandler } from '../utils/errorHandler.js';
 import { successResponse, errorResponse } from '../utils/responseHandler.js';
 
-
+// helper function for generating unique transaction #
 const generateInvoiceNumber = () => {
   return `KZN-INV#${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`};
+
+  //  helper function for generating recurring dates
+  const generateRecurringDates = (startDate, frequency, occurrences) => {
+    const dates = [];
+    let currentDate = new Date(startDate);
+  
+    for (let i = 0; i < occurrences; i++) {
+      dates.push(new Date(currentDate).toISOString());
+  
+      switch (frequency) {
+        case 'daily':
+          currentDate.setDate(currentDate.getDate() + 1);
+          break;
+        case 'weekly':
+          currentDate.setDate(currentDate.getDate() + 7);
+          break;
+        case 'monthly':
+          currentDate.setMonth(currentDate.getMonth() + 1);
+          break;
+      }
+    }
+  
+    return dates;
+  };
 
 // Create Booking
 export const createBooking = async (req, res) => {
@@ -18,42 +42,71 @@ export const createBooking = async (req, res) => {
     schedule, 
     recurringSchedule = null, 
     status = "pending", 
-    mop,  
+    mop,
     address,
-    specialInstructions 
+    specialInstructions
   } = req.body;
 
   try {
-    const bookingId = Date.now().toString(); // Generate unique ID (or use Firestore auto-ID)
     const invoiceNumber = generateInvoiceNumber();
+    const bookingId = Date.now().toString(); // Generate unique ID (or use Firestore auto-ID)
 
-    const bookingData = { 
-      bookingId,
-      customerId, 
-      cleanerIds, 
-      serviceType, 
-      serviceCategory,
-      addOns, 
-      schedule, 
-      recurringSchedule, 
-      status, 
-      mop,
-      invoiceNumber,
-      address, // Optional: Customer address for on-site cleaning
-      specialInstructions, // Optional: Special cleaning instructions
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
+    let bookingEntries = [];
 
-    // Store booking in Firestore
-    await setDocument('bookings', bookingId, bookingData);
+    if (recurringSchedule) {
+      const { frequency, occurrences } = recurringSchedule;
+      const recurringDates = generateRecurringDates(schedule, frequency, occurrences);
+
+      recurringDates.forEach((date, index) => {
+        const recurringBookingId = `${bookingId}-${index + 1}`;
+        bookingEntries.push({
+          bookingId: recurringBookingId,
+          customerId,
+          cleanerIds,
+          serviceType,
+          serviceCategory,
+          addOns,
+          schedule: date,
+          recurringSchedule, 
+          status,
+          mop,
+          invoiceNumber: `${invoiceNumber}-${index + 1}`,
+          address,
+          specialInstructions,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      });
+    } else {
+      bookingEntries.push({
+        bookingId,
+        customerId,
+        cleanerIds,
+        serviceType,
+        serviceCategory,
+        addOns,
+        schedule,
+        status,
+        mop,
+        invoiceNumber,
+        address,
+        specialInstructions,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    }
+
+    // Store all bookings in Firestore
+    for (const booking of bookingEntries) {
+      await setDocument('bookings', booking.bookingId, booking);
+    }
 
     // Notify all assigned cleaners
     for (const cleanerId of cleanerIds) {
       await sendNotification(cleanerId, 'New Booking Assigned', `You have a new ${serviceType} booking.`);
     }
 
-    successResponse(res, 'Booking created successfully', { bookingId, invoiceNumber });
+    successResponse(res, 'Booking(s) created successfully', { bookings: bookingEntries });
   } catch (error) {
     errorHandler(res, error);
   }
