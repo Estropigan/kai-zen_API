@@ -49,7 +49,7 @@ export const createBooking = async (req, res) => {
 
   try {
     const invoiceNumber = generateInvoiceNumber();
-    const bookingId = Date.now().toString(); // Generate unique ID (or use Firestore auto-ID)
+    const bookingId = `KZN-BKG#${Date.now().toString()}`; // Generate unique ID (or use Firestore auto-ID)
 
     let bookingEntries = [];
 
