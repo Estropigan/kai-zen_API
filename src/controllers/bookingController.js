@@ -8,11 +8,12 @@ const generateInvoiceNumber = () => {
   return `KZN-INV#${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`};
 
   //  helper function for generating recurring dates
-  const generateRecurringDates = (startDate, frequency, occurrences) => {
+  const generateRecurringDates = (startDate, frequency, endDate) => {
     const dates = [];
     let currentDate = new Date(startDate);
+    const finalDate = new Date(endDate);
   
-    for (let i = 0; i < occurrences; i++) {
+      while (currentDate <= finalDate) {
       dates.push(new Date(currentDate).toISOString());
   
       switch (frequency) {
@@ -54,8 +55,8 @@ export const createBooking = async (req, res) => {
     let bookingEntries = [];
 
     if (recurringSchedule) {
-      const { frequency, occurrences } = recurringSchedule;
-      const recurringDates = generateRecurringDates(schedule, frequency, occurrences);
+      const { frequency, endDate } = recurringSchedule;
+      const recurringDates = generateRecurringDates(schedule, frequency, endDate);
 
       recurringDates.forEach((date, index) => {
         const recurringBookingId = `${bookingId}-${index + 1}`;
