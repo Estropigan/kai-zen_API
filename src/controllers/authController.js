@@ -50,13 +50,14 @@ export const loginUser = async (req, res) => {
     //   await updateDocument("users", userRecord.uid, { fcmToken });
     // }
 
-    const token = jwt.sign({ uid: userRecord.uid, role: userData.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const accessToken = jwt.sign({ uid: userRecord.uid, role: userData.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const refreshToken = jwt.sign({ uid: userRecord.uid, role: userData.role }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     // if (fcmToken) {
     //   await sendNotification(fcmToken, "Login Alert", "You have successfully logged in.");
     // }
 
-    successResponse(res, "Login successful", { token });
+    successResponse(res, "Login successful", { accessToken, refreshToken });
   } catch (error) {
     errorHandler(res, error);
   }
@@ -83,9 +84,9 @@ export const googleLogin = async (req, res) => {
       await setDocument("users", uid, userData);
     }
 
-    const token = jwt.sign({ uid, email, role: userData.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
+    const accessToken = jwt.sign({ uid, email, role: userData.role }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
-    successResponse(res, "Login successful", { token });
+    successResponse(res, "Login successful", { accessToken });
   } catch (error) {
     errorHandler(res, error);
   }
