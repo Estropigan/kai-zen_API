@@ -64,3 +64,19 @@ export const deleteUser = async (req, res) => {
     errorHandler(res, error);
   }
 };
+
+export const reviewCleaner = async (req, res) => {
+  const { cleanerId, rating, feedback } = req.body;
+  const { uid } = req.params;
+  try {
+    const cleaner = await getDocument('users', cleanerId);
+    if (!cleaner) return errorResponse(res, 'Cleaner not found', 404);
+    const user = await getDocument('users', uid);
+    if (!user) return errorResponse(res, 'User not found', 404);
+    await updateDocument('users', cleanerId, { rating: ((cleaner.rating * cleaner.reviewsCount) + rating) / (cleaner.reviewsCount + 1), reviewsCount: cleaner.reviewsCount + 1 });
+    await updateDocument('users', uid, { feedbacks: [...user.feedbacks, { cleanerId, rating, feedback }] });
+    successResponse(res, 'Cleaner reviewed successfully');
+} catch (error){
+  errorHandler(res, error);
+}
+};

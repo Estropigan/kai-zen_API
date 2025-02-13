@@ -194,3 +194,14 @@ export const deleteBooking = async (req, res) => {
     errorHandler(res, error);
   }
 };
+
+export const cancelBooking = async (req, res) => {
+  const { bookingId } = req.params;
+
+  try {
+    await updateDocument('bookings', bookingId, { status: 'cancelled' });
+    successResponse(res, 'Booking cancelled successfully');
+  } catch (error){
+    errorHandler(res, error);
+  }
+}
