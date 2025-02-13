@@ -10,11 +10,19 @@ const generateInvoiceNumber = () => {
   //  helper function for generating recurring dates
   const generateRecurringDates = (startDate, frequency, endDate) => {
     const dates = [];
-    let currentDate = new Date(startDate);
-    const finalDate = new Date(endDate);
   
-      while (currentDate <= finalDate) {
-      dates.push(new Date(currentDate).toISOString());
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+  
+    // 🔹 Check if dates are valid
+    if (isNaN(start) || isNaN(end)) {
+      throw new Error('Invalid startDate or endDate in recurring schedule');
+    }
+  
+    let currentDate = start;
+  
+    while (currentDate <= end) {
+      dates.push(currentDate.toISOString());
   
       switch (frequency) {
         case 'daily':
@@ -31,6 +39,7 @@ const generateInvoiceNumber = () => {
   
     return dates;
   };
+  
 
 // Create Booking
 export const createBooking = async (req, res) => {
@@ -49,13 +58,24 @@ export const createBooking = async (req, res) => {
   } = req.body;
 
   try {
+    console.log("Received schedule:", schedule); // Debugging log
+
+    if (isNaN(new Date(schedule))) {
+      throw new Error("Invalid schedule date format");
+    }
+
     const invoiceNumber = generateInvoiceNumber();
-    const bookingId = `KZN-BKG#${Date.now().toString()}`; // Generate unique ID (or use Firestore auto-ID)
+    const bookingId = `KZN-BKG#${Date.now().toString()}`;
 
     let bookingEntries = [];
 
     if (recurringSchedule) {
       const { frequency, endDate } = recurringSchedule;
+
+      console.log("Generating recurring dates..."); // Debugging log
+      console.log("Start Date:", schedule);
+      console.log("End Date:", endDate);
+
       const recurringDates = generateRecurringDates(schedule, frequency, endDate);
 
       recurringDates.forEach((date, index) => {
@@ -97,6 +117,9 @@ export const createBooking = async (req, res) => {
       });
     }
 
+    // 🔹 Debugging log
+    console.log("Final booking entries:", bookingEntries);
+
     // Store all bookings in Firestore
     for (const booking of bookingEntries) {
       await setDocument('bookings', booking.bookingId, booking);
@@ -109,9 +132,11 @@ export const createBooking = async (req, res) => {
 
     successResponse(res, 'Booking(s) created successfully', { bookings: bookingEntries });
   } catch (error) {
+    console.error("Error creating booking:", error); // Debugging log
     errorHandler(res, error);
   }
 };
+
 
 // Get booking by ID
 export const getBookingById = async (req, res) => {
