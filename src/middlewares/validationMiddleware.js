@@ -48,7 +48,7 @@ export const validateBooking = (req, res, next) => {
     schedule: Joi.date().iso().required(), // ISO format date
     recurringSchedule: Joi.object({
       frequency: Joi.string().valid('daily', 'weekly', 'monthly').required(),
-      endDate: Joi.date().iso().greater(Joi.ref('schedule')).required()// Limit to 12 occurrences max
+      endDate: Joi.date().iso().greater(Joi.ref('../schedule')).required()// Limit to 12 occurrences max
     }).optional(),
     status: Joi.string().valid('pending', 'in-progress', 'completed', 'cancelled', 'paid').required(),
     mop: Joi.string().valid('card', 'applePay', 'googlePay', 'stripe', 'paypal').required(),
